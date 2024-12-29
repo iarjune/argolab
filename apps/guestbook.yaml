@@ -1,16 +1,16 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: test2
+  name: guestbook
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
   source:
-    repoURL: https://github.com/iarjune/argolab.git
+    repoURL: https://github.com/argoproj/argocd-example-apps.git --path guestbook
     targetRevision: HEAD
-    path: apps/test2
+    path: guestbook
   destination:
     server: https://192.168.0.110:6443
     namespace: default
