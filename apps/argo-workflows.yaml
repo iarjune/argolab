@@ -4,13 +4,13 @@ metadata:
   name: argo-workflows
   namespace: argocd
   finalizers:
-    - resources-finalizer.argo-workflows.argoproj.io
+    - resources-finalizer.argo.argoproj.io
 spec:
   project: default
   source:
     repoURL: https://github.com/iarjune/argolab.git
     targetRevision: HEAD
-    path: components/argo-workflows/base
+    path: components/argo-workflows/namespace-install
   destination:
     server: https://192.168.0.110:6443
   syncPolicy:
