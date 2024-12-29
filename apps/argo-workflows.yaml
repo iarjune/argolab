@@ -1,16 +1,16 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: argocd
+  name: argo-workflows
   namespace: argocd
   finalizers:
-    - resources-finalizer.argocd.argoproj.io
+    - resources-finalizer.argo-workflows.argoproj.io
 spec:
   project: default
   source:
     repoURL: https://github.com/iarjune/argolab.git
     targetRevision: HEAD
-    path: components/argo-cd
+    path: components/argo-workflows/base
   destination:
     server: https://192.168.0.110:6443
   syncPolicy:
