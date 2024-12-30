@@ -10,7 +10,7 @@ spec:
   source:
     repoURL: https://github.com/iarjune/argolab.git
     targetRevision: HEAD
-    path: components/argo-cd
+    path: components/argo-cd/cluster-install
   destination:
     server: https://192.168.0.110:6443
   syncPolicy:
