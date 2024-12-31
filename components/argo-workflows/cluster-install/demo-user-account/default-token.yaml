@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Secret
 metadata:
-  name: demo-sa-token
+  name: default-token
   annotations:
     kubernetes.io/service-account.name: demo
 type: kubernetes.io/service-account-token
