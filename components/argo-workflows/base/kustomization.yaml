@@ -10,5 +10,5 @@ resources:
 patches:
  - target:
       kind: Service
-      name: argocd-server 
+      name: argo-server 
    path: service-patch.yaml
