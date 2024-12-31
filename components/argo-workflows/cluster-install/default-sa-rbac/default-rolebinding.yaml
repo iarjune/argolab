@@ -5,7 +5,7 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: argo-aggregate-to-admin
+  name: argo-admin
 subjects:
   - kind: ServiceAccount
     name: default
