@@ -3,3 +3,4 @@ kind: Kustomization
 resources:
 - ./default-rolebinding.yaml
 - ./default-token.yaml 
+- ./admin-role.yaml
