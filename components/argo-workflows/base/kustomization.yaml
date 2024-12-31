@@ -6,3 +6,9 @@ resources:
 - crds
 - workflow-controller
 - argo-server
+
+patches:
+ - target:
+      kind: Service
+      name: argocd-server 
+   path: service-patch.yaml
