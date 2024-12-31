@@ -31,3 +31,13 @@ rules:
   - patch
   - update
   - watch
+- apiGroups:
+  - core
+  resources:
+  - events
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - delete
