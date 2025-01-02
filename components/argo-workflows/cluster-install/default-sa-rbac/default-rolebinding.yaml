@@ -6,6 +6,10 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
   name: argo-admin
+  roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: argo-server-cluster-role
 subjects:
   - kind: ServiceAccount
     name: default
