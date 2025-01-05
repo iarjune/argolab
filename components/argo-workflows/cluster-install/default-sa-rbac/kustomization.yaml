@@ -7,4 +7,5 @@ resources:
 - ./default-user-role-binding-events.yaml
 - ./default-user-role-binding-wf.yaml
 - ./executor-role.yaml
-
+- ./executor-user-role-binding.yaml 
+- ./executor-sa.yaml
