@@ -47,7 +47,7 @@ spec:
 #      group: cert-manager.io
  unsafeFlags:
 #    tls: false
-   pxcSize: false
+   pxcSize: true
    proxySize: false
 #    backupIfUnhealthy: false
 #  pause: false
