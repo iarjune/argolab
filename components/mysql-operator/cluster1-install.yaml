@@ -142,10 +142,10 @@ spec:
 #          memory: 200M
 #          cpu: 200m
 #    envVarsSecret: my-env-var-secrets
-    # resources:
-      # requests:
-      #   memory: 1G
-      #   cpu: 600m
+    resources:
+      requests:
+        memory: 1G
+        cpu: 600m
 #        ephemeral-storage: 1G
 #      limits:
 #        memory: 1G
@@ -161,9 +161,7 @@ spec:
 #      topologyKey: kubernetes.io/hostname
 #      whenUnsatisfiable: DoNotSchedule
     affinity:
-      # antiAffinityTopologyKey: "kubernetes.io/hostname"
-       antiAffinityTopologyKey: "none"
-
+      antiAffinityTopologyKey: "kubernetes.io/hostname"
 #      advanced:
 #        nodeAffinity:
 #          requiredDuringSchedulingIgnoredDuringExecution:
@@ -194,9 +192,9 @@ spec:
 #          name: new-snapshot-test
 #          kind: VolumeSnapshot
 #          apiGroup: snapshot.storage.k8s.io
-        # resources:
-        #   requests:
-        #     storage: 6G
+        resources:
+          requests:
+            storage: 6G
     gracePeriod: 600
 #    lifecycle:
 #      preStop:
@@ -206,7 +204,7 @@ spec:
 #        exec:
 #          command: [ "/bin/true" ]
   haproxy:
-    enabled: false
+    enabled: true
     size: 3
     image: percona/haproxy:2.8.11
 #    imagePullPolicy: Always
@@ -321,10 +319,10 @@ spec:
 #          memory: 200M
 #          cpu: 200m
 #    envVarsSecret: my-env-var-secrets
-    # resources:
-    #   requests:
-    #     memory: 1G
-    #     cpu: 600m
+    resources:
+      requests:
+        memory: 1G
+        cpu: 600m
 #      limits:
 #        memory: 1G
 #        cpu: 700m
@@ -353,7 +351,7 @@ spec:
 #      topologyKey: kubernetes.io/hostname
 #      whenUnsatisfiable: DoNotSchedule
     affinity:
-      antiAffinityTopologyKey: "none"
+      antiAffinityTopologyKey: "kubernetes.io/hostname"
 #      advanced:
 #        nodeAffinity:
 #          requiredDuringSchedulingIgnoredDuringExecution:
