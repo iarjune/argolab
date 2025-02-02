@@ -57,7 +57,7 @@ spec:
     apply: disabled
     schedule: "0 4 * * *"
   pxc:
-    size: 3
+    size: 2
     image: percona/percona-xtradb-cluster:8.0.39-30.1
     autoRecovery: true
 #    expose:
@@ -205,7 +205,7 @@ spec:
 #          command: [ "/bin/true" ]
   haproxy:
     enabled: true
-    size: 3
+    size: 2
     image: percona/haproxy:2.8.11
 #    imagePullPolicy: Always
 #    schedulerName: mycustom-scheduler
