@@ -321,10 +321,10 @@ spec:
 #          memory: 200M
 #          cpu: 200m
 #    envVarsSecret: my-env-var-secrets
-    resources:
-      requests:
-        memory: 1G
-        cpu: 600m
+    # resources:
+    #   requests:
+    #     memory: 1G
+    #     cpu: 600m
 #      limits:
 #        memory: 1G
 #        cpu: 700m
@@ -353,7 +353,7 @@ spec:
 #      topologyKey: kubernetes.io/hostname
 #      whenUnsatisfiable: DoNotSchedule
     affinity:
-      antiAffinityTopologyKey: "kubernetes.io/hostname"
+      antiAffinityTopologyKey: "none"
 #      advanced:
 #        nodeAffinity:
 #          requiredDuringSchedulingIgnoredDuringExecution:
