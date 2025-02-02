@@ -45,10 +45,10 @@ spec:
 #      name: special-selfsigned-issuer
 #      kind: ClusterIssuer
 #      group: cert-manager.io
-#  unsafeFlags:
+ unsafeFlags:
 #    tls: false
-#    pxcSize: false
-#    proxySize: false
+   pxcSize: false
+   proxySize: false
 #    backupIfUnhealthy: false
 #  pause: false
   updateStrategy: SmartUpdate
