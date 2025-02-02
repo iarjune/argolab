@@ -46,9 +46,9 @@ spec:
 #      kind: ClusterIssuer
 #      group: cert-manager.io
  unsafeFlags:
-#    tls: false
+   tls: true
    pxcSize: true
-   proxySize: false
+   proxySize: true
 #    backupIfUnhealthy: false
 #  pause: false
   updateStrategy: SmartUpdate
@@ -380,7 +380,7 @@ spec:
 #          command: [ "/bin/true" ]
   proxysql:
     enabled: false
-    size: 3
+    size: 2
     image: percona/proxysql2:2.7.1
 #    imagePullPolicy: Always
 #    configuration: |
