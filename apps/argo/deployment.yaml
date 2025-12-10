@@ -18,6 +18,7 @@ spec:
       containers:
         - name: argo-bash
           image: iarjune/argo:latest
+          imagePullPolicy: Always
           command:
             - /usr/bin/bash
           args:
