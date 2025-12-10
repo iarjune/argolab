@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: argo-bash
+  namespace: argo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: argo-bash
+  template:
+    metadata:
+      labels:
+        app: argo-bash
+    spec:
+      imagePullSecrets:
+        - name: dockerhub-creds   # remove if not needed
+      containers:
+        - name: argo-bash
+          image: iarjunea/argo:latest
+          command:
+            - /usr/bin/bash
+          args:
+            - -c
+            - "while true; do sleep 3600; done"
+

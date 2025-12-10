@@ -24870,15 +24870,22 @@ metadata:
   name: argocd-rbac-cm
 data:
   policy.csv: |
-    # Existing policies...
-
-    # Role that can fully manage applications
-    p, role:cicd, applications, *, */*, allow
+    # CICD role permissions
+    p, role:cicd, applications, create, */*, allow
+    p, role:cicd, applications, get, */*, allow
+    p, role:cicd, applications, update, */*, allow
+    p, role:cicd, applications, delete, */*, allow
+    p, role:cicd, applications, sync, */*, allow
+    p, role:cicd, applications, override, */*, allow
+    p, role:cicd, applications, action/*, */*, allow
+    p, role:cicd, projects, get, *, allow
+    p, role:cicd, repositories, get, *, allow
+    p, role:cicd, repositories, create, *, allow
+    p, role:cicd, clusters, get, *, allow
 
     # Bind the cicd user to that role
     g, cicd, role:cicd
 
-  # (optional) if you don't already have this:
   policy.default: role:readonly
 ---
 apiVersion: v1

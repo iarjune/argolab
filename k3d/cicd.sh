@@ -4,22 +4,70 @@
 # trap "kill $PF_PID" EXIT
 # sleep 3
 
-ARGOCD_AUTH_TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJhcmdvY2QiLCJzdWIiOiJjaWNkOmFwaUtleSIsIm5iZiI6MTc2NTA4MzkxMywiaWF0IjoxNzY1MDgzOTEzLCJqdGkiOiJkNmZlZGM0NC1mMmZlLTRjMjQtODIyOC0yNzI5MDIyMWZmMGMifQ.qA_J9o-Pxo-oDef_Io8k5qNSjTVH1CB7XlNUnlAQ5uM"
+# Check if app exists before creating it again
+# the goal of cicd with argo is to launch a service after a build.  
+# THe pipeline will trigger a argo wf with the following params.  These params are passed to create the deployment configs and app in argocd.
+#   service name
+#   service version
+
+# The pipeline steps
+# Checkout project
+# Import cicd.properties
+#   DEPLOY_KIND = deployment
+#   DEPLOY_DATACENTERS=ric1,pdx1
+#   DEPLOY_ENVS = dev,stage
+#   DEPLOY_DECOM=false
+#   DEPLOY_VARIANT=false
+# Checkout cd-deploy-configs
+# Check if deployment config exists, if not create it in cd-deploy-configs/apps/<service name>/dev-ric1/
+# Checkout cd-releases
+# Check if app exists, if not create it in cd-releases/dev/ric1/dev-<service name>.yaml
+# The image tag is configured with the app manifest
+# Deploy the app to argocd
+
+
+
+# Deployment defaults: 
+# * dest-server: dev ric1
+# * dest-namespace: dev
+# * sync-policy is automated
+# * auto-prune is true
+# * self-heal is true
+# * sync-option CreateNamespace is true
+
+
+ARGOCD_AUTH_TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJhcmdvY2QiLCJzdWIiOiJjaWNkOmFwaUtleSIsIm5iZiI6MTc2NTIyODA5MCwiaWF0IjoxNzY1MjI4MDkwLCJqdGkiOiI2MDg5ZGUyMC1jYjQ4LTQ5NjgtODQ1Yy01NjU3NmIyMTNjNTYifQ.OUX3ob5Ya09xD-VMipEtwGGmJxijtDs_73bHI6MRjZw"
 
 # Use token instead of username/password
 ARGOCD_SERVER="localhost:8443"
 ARGOCD_AUTH_TOKEN="$ARGOCD_AUTH_TOKEN"   # from CI secret
-APP_NAME="my-app"
+APP_NAME="test-app"
 
-# With token auth, skip login and pass --auth-token directly to each command:
-echo sync
+argocd app create test-app \
+  --server "$ARGOCD_SERVER" \
+  --auth-token "$ARGOCD_AUTH_TOKEN" \
+  --insecure \
+  --project default \
+  --repo https://github.com/iarjune/argolab.git \
+  --revision main \
+  --path apps/test-app \
+  --dest-server https://kubernetes.default.svc \
+  --dest-namespace default \
+  --sync-policy automated \
+  --auto-prune \
+  --self-heal \
+  --sync-option CreateNamespace=true
+
+
+# argocd app set argocd/test-app --kustomize-image nginx:1.25-alpine
+
 argocd app sync "$APP_NAME" \
   --server "$ARGOCD_SERVER" \
   --auth-token "$ARGOCD_AUTH_TOKEN" \
   --insecure \
   --prune --timeout 600
 
-echo wait
+
 argocd app wait "$APP_NAME" \
   --server "$ARGOCD_SERVER" \
   --auth-token "$ARGOCD_AUTH_TOKEN" \
