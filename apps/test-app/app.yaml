@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: test-app
+  namespace: argocd        # Argo CD's namespace
+spec:
+  project: default         # Or your custom Argo CD project
+
+  source:
+    repoURL: https://github.com/iarjune/argolab.git   # <-- change this
+    targetRevision: main                                 # <-- branch or tag
+    path: apps/test-app                                 # <-- folder with kustomization.yaml
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default           # Namespace where the argo-bash Deployment will live
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true   # Argo CD will create the 'argo' namespace if missing
+
