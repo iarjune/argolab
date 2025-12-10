@@ -17,7 +17,7 @@ spec:
         - name: dockerhub-creds   # remove if not needed
       containers:
         - name: argo-bash
-          image: iarjunea/argo:latest
+          image: iarjune/argo:latest
           command:
             - /usr/bin/bash
           args:
