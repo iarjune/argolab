@@ -1,0 +1,72 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: argocd-set-image-template
+spec:
+  entrypoint: main
+  volumes:
+    - name: workspace
+      emptyDir: {}
+
+  templates:
+    - name: main
+      inputs:
+        parameters:
+          - name: argocd_server
+            description: "ArgoCD server URL (e.g., argocd-server.argocd.svc.cluster.local:80)"
+          - name: app_name
+            description: "ArgoCD application name (e.g., test-app)"
+          - name: image
+            description: "New image to set (e.g., nginx:1.25-alpine)"
+      steps:
+        - - name: set-image
+            template: set-image
+            arguments:
+              parameters:
+                - name: argocd_server
+                  value: "{{inputs.parameters.argocd_server}}"
+                - name: app_name
+                  value: "{{inputs.parameters.app_name}}"
+                - name: image
+                  value: "{{inputs.parameters.image}}"
+
+    - name: set-image
+      inputs:
+        parameters:
+          - name: argocd_server
+          - name: app_name
+          - name: image
+      container:
+        image: argoproj/argocd:latest
+        env:
+          - name: ARGOCD_AUTH_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: argocd-auth
+                key: token
+        command: [sh, -c]
+        args:
+          - |
+            set -e
+
+            echo "Setting image for app: {{inputs.parameters.app_name}}"
+            echo "New image: {{inputs.parameters.image}}"
+
+            argocd app set {{inputs.parameters.app_name}} \
+              --server {{inputs.parameters.argocd_server}} \
+              --plaintext \
+              --kustomize-image {{inputs.parameters.image}}
+
+            echo "Image updated successfully"
+
+            echo "Syncing application..."
+            argocd app sync {{inputs.parameters.app_name}} \
+              --server {{inputs.parameters.argocd_server}} \
+              --plaintext \
+              --prune
+
+            echo "Application synced successfully"
+        volumeMounts:
+          - name: workspace
+            mountPath: /workspace
+
