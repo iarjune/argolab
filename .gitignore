@@ -1,2 +1,3 @@
 components/ignore
-k3d/*
+creds.txt
+git.sh
