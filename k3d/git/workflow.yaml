@@ -1,0 +1,17 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: my-git-clone-
+spec:
+  workflowTemplateRef:
+    name: git-clone-template
+  arguments:
+    parameters:
+      - name: bb_user
+        value: ""
+      - name: bb_token
+        value: ""
+      - name: git_repo
+        value: "cd-deploy-configs"
+      - name: branch
+        value: "master"

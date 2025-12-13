@@ -1,0 +1,15 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: argocd-set-image-
+spec:
+  workflowTemplateRef:
+    name: argocd-set-image-template
+  arguments:
+    parameters:
+      - name: argocd_server
+        value: "argocd-server.argocd:80"
+      - name: app_name
+        value: "test-app"
+      - name: image
+        value: "nginx:1.25-alpine"
