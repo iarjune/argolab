@@ -83,6 +83,7 @@ kubectl -n argo create secret docker-registry dockerhub-creds \
 
 argocd app set argocd/argo-bash --server "${ARGOCD_SERVER}" --auth-token "${ARGOCD_AUTH_TOKEN}"  --plaintext  --kustomize-image argo:latest
 
+<<<<<<< HEAD
 
 Kargo
 iarjune@fedora:~/git/argolab/k3d/kargo$ pass="$(openssl rand -base64 48 | tr -d '=+/' | head -c 24)"
@@ -110,3 +111,5 @@ stringData:
   repoURL: https://github.com/<org>/<repo>.git
   username: <anything-often-ok>
   password: <PAT-or-password>
+=======
+>>>>>>> cd42458115297f496ded7f8c3d2d4204d1ffc607
