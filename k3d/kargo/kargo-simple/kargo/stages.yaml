@@ -12,6 +12,8 @@ spec:
       name: guestbook
     sources:
       direct: true
+      autoPromotionOptions:
+        selectionPolicy: NewestFreight    
   promotionTemplate:
     spec:
       steps:

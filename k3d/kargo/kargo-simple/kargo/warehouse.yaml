@@ -4,6 +4,7 @@ metadata:
   name: guestbook
   namespace: kargo-simple
 spec:
+  interval: 1m
   subscriptions:
   - image:
       repoURL: iarjune/argo
