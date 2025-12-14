@@ -5,4 +5,4 @@ resources:
 namespace: guestbook-simple-dev
 images:
 - name: iarjune/argo
-  newTag: 1.0.8
+  newTag: 1.0.9
