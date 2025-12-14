@@ -83,9 +83,15 @@ kubectl -n argo create secret docker-registry dockerhub-creds \
 
 argocd app set argocd/argo-bash --server "${ARGOCD_SERVER}" --auth-token "${ARGOCD_AUTH_TOKEN}"  --plaintext  --kustomize-image argo:latest
 
-<<<<<<< HEAD
 
-Kargo
+# Kargo Lab
+# Kargo CLI
+ wget https://github.com/akuity/kargo/releases/download/v1.8.4/kargo-linux-amd64
+ chmod +x kargo-linux-amd64
+ sudo mv kargo-linux-amd64 /usr/local/bin/kargo
+
+
+# Kargo Auth
 iarjune@fedora:~/git/argolab/k3d/kargo$ pass="$(openssl rand -base64 48 | tr -d '=+/' | head -c 24)"
 echo "ADMIN_PASSWORD=$pass"
 ADMIN_PASSWORD=AbZoD9a4EtNlMLJLtHhuMJMe
@@ -96,20 +102,3 @@ iarjune@fedora:~/git/argolab/k3d/kargo$ key="$(openssl rand -base64 48 | tr -d '
 echo "TOKEN_SIGNING_KEY=$key"
 TOKEN_SIGNING_KEY=E2sigQSHva7IIjDCgCCOZuYvbDHooiEU
 
-
-Create project kgo-project
-Add git secret for git creds in the projects namespace
-
-apiVersion: v1
-kind: Secret
-metadata:
-  name: git-creds
-  namespace: kgo-project
-  labels:
-    kargo.akuity.io/cred-type: git
-stringData:
-  repoURL: https://github.com/<org>/<repo>.git
-  username: <anything-often-ok>
-  password: <PAT-or-password>
-=======
->>>>>>> cd42458115297f496ded7f8c3d2d4204d1ffc607
