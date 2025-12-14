@@ -1,0 +1,234 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: cd-pipeline-template
+  annotations:
+    akeyless/enabled: "true"
+spec:
+  timezone: America/New_York
+  imagePullSecrets:
+    - name: docker-registry-access-token-ampdockercirw
+  entrypoint: entry-template
+  arguments:
+    parameters:
+      - name: PROJECT_NAME
+        value: ""
+      - name: IMAGE_NAME
+        value: ""
+      - name: IMAGE_TAG
+        value: ""
+      - name: BRANCH
+        value: ""
+  templates:
+    - name: entry-template
+      podSpecPatch: '{"serviceAccountName": "wi-default"}'
+      steps:
+        - - name: create-pipeline
+            template: run-template
+
+    - name: run-template
+      podSpecPatch: '{"serviceAccountName": "wi-default"}'
+      inputs:
+        parameters:
+          - name: PROJECT_NAME
+            value: "{{workflow.parameters.PROJECT_NAME}}"
+          - name: PROJECT_TYPE
+            value: "{{workflow.parameters.PROJECT_TYPE}}"
+          - name: PIPELINE_NAME
+            value: "{{workflow.parameters.PIPELINE_NAME}}"
+          - name: BRANCH
+            value: "{{workflow.parameters.BRANCH}}"
+      container:
+        resources:
+          requests:
+            cpu: ".5"
+            memory: "1Gi"
+          limits:
+            cpu: "2"
+            memory: "4Gi"
+        image: admarketplace/reference:git-curl
+        command: ["bash", "-c"]
+        args: 
+          - |
+             set -e
+             echo "##### Set Parameters..."
+             export PROJECT_NAME={{inputs.parameters.PROJECT_NAME}}
+             export PROJECT_TYPE={{inputs.parameters.PROJECT_TYPE}}
+             export PIPELINE_NAME={{inputs.parameters.PIPELINE_NAME}}
+             export BRANCH={{inputs.parameters.BRANCH}}
+             export NEW_BRANCH="ci-create-pipeline-${BRANCH}"
+             export BB_API_URL="https://api.bitbucket.org/2.0/repositories/admarketplace/$PROJECT_NAME"
+             export BB_BASE_URL="https://$CI_BB_USER:$CI_BB_USER_TOKEN@bitbucket.org/admarketplace"
+             export REPO_URL="${BB_BASE_URL}/${PROJECT_NAME}.git"
+
+             echo "PROJECT_NAME: $PROJECT_NAME"
+             echo "PROJECT_TYPE: $PROJECT_TYPE"
+             echo "PIPELINE_NAME: $PIPELINE_NAME"
+             echo "BRANCH: $BRANCH"
+
+             echo "[INFO] Starting validation tests..."
+
+             echo "[INFO] Are vars set correctly?"
+             if [[ -z "$PROJECT_TYPE" || -z "$PIPELINE_NAME" || -z "$CI_BB_API_TOKEN" || -z "$CI_BB_USER" ]]; then
+               echo "[ERROR] PROJECT_TYPE, PIPELINE_NAME, CI_BB_USER or CI_BB_API_TOKEN is not set."
+               exit 1
+             else
+               echo "[OK]"
+             fi
+
+             echo "[INFO] Can I connect to GIT?"
+             if git ls-remote "${BB_BASE_URL}/ci-test-repo.git" &>/dev/null; then
+               echo "[OK]"
+             else
+               echo "[ERROR] GIT connection failed."
+               exit 1
+             fi
+
+             echo "[INFO] Does the GIT repo $PROJECT_NAME exist?"
+             if git ls-remote "$REPO_URL" &>/dev/null; then
+                 echo "[OK]"
+             else
+                 echo "[ERROR] Repository not found: $PROJECT_NAME"
+                 exit 1
+             fi
+
+             # Figure out of the main brach is actually named master and update the BRANCH var
+             # NOTE: case when both main and master exists will not be handeled
+             if [ "$BRANCH" == "main" ]; then
+               echo "[INFO] Is main branch actually master branch?"
+               if git ls-remote --exit-code --heads "$REPO_URL" main &>/dev/null; then
+                 echo "[OK]"
+               elif git ls-remote --exit-code --heads "$REPO_URL" master &>/dev/null; then
+                 echo "[OK] NOTE: Using 'master' branch"
+                 export BRANCH="master"
+               else
+                 echo "[ERROR] Branch main or master not found in $PROJECT_NAME."
+                 exit 1
+               fi
+             fi
+
+             echo "[INFO] Does $BRANCH exist?"
+             if git ls-remote --exit-code --heads "$REPO_URL" $BRANCH &>/dev/null; then
+               echo "[OK]"
+             else
+               echo "[ERROR] Branch $BRANCH not found in $PROJECT_NAME."
+               exit 1
+             fi
+             #########################
+             echo "[INFO] Enabling the Pipeline feature for this GIT repo..."
+             curl -s --request PUT \
+                 --url "${BB_API_URL}/pipelines_config" \
+                 --header "Authorization: Bearer $CI_BB_API_TOKEN" \
+                 --header "Accept: application/json" \
+                 --header "Content-Type: application/json" \
+                 --data '{
+                 "enabled": true
+                 }'
+
+             repo_info=$(curl -s --request GET \
+             --url "${BB_API_URL}/pipelines_config" \
+             --header "Authorization: Bearer $CI_BB_API_TOKEN" \
+             --header "Accept: application/json")
+             pipelines_enabled=$(echo $repo_info | jq -r '.enabled')
+
+             if [ "$pipelines_enabled" == "true" ]; then
+               echo "[INFO] Bitbucket pipelines enabled."
+             else
+               echo "[WARNING] Enabling Bitbucket pipelines did not return true."
+             fi
+             #########################################
+             echo "[INFO] Cloning repository..."
+             if git clone --branch $BRANCH "$REPO_URL"; then
+               echo "[OK]"
+               if ! cd $PROJECT_NAME; then
+                 echo "[ERROR] cd to $PROJECT_NAME failed"
+                 exit 1
+               fi
+             else
+               echo "[ERROR] Failed to clone the repo $PROJECT_NAME"
+               exit 1
+             fi
+             #########################################
+             echo "[INFO] Creating a new branch for the Pull Request..."
+             if git checkout "$NEW_BRANCH"; then
+               echo "[OK] Checked out existing branch $NEW_BRANCH"
+             elif git checkout -b "$NEW_BRANCH"; then
+               echo "[OK] Created branch '$NEW_BRANCH' from '$BRANCH'..."
+             else
+               echo "[ERROR] Failed to create $NEW_BRANCH"
+               exit 1
+             fi
+             #########################################
+             echo "[INFO] Create bitbucket-pipelines.yml..."
+             cat <<EOF > bitbucket-pipelines.yml
+             pipelines:
+               default:
+                 import: bitbucket-pipelines:$PROJECT_TYPE:$PIPELINE_NAME
+             EOF
+             ########################################
+             echo "[INFO] Pushing bitbucket-pipelines.yml file..."
+
+             git add bitbucket-pipelines.yml
+             [ -f Jenkinsfile ] && git rm Jenkinsfile
+             git config --local user.name "$CI_BB_USER"
+             git config --local user.email "$CI_BB_USER@admarketplace.com"
+             git commit -am "Add Bitbucket Pipelines YAML file" || true
+             git push --set-upstream origin "$NEW_BRANCH" || true
+
+             ########################################
+             echo "[INFO] Creating Pull Request..."
+             PR_RESPONSE=$(curl -s -X POST \
+             --url "${BB_API_URL}/pullrequests" \
+             --header "Authorization: Bearer $CI_BB_API_TOKEN" \
+             --header "Accept: application/json" \
+             --header "Content-Type: application/json" \
+             --data '{
+               "title": "Add Bitbucket Pipeline",
+               "source": {
+                 "branch": {
+                   "name": "'"$NEW_BRANCH"'"
+                 }
+               },
+               "destination": {
+                 "branch": {
+                   "name": "'"$BRANCH"'"
+                 }
+               },
+               "description": "Add Bitbucket Pipelines YAML file",
+               "close_source_branch": true
+             }')
+
+             if [[ -z "$PR_RESPONSE" || "$PR_RESPONSE" == "null" ]]; then
+               echo "[ERROR] PR creation API response is empty or invalid."
+               exit 1
+             fi
+
+             PR_URL=$(echo "$PR_RESPONSE" | jq -r '.links.html.href')
+             #########################################
+             if [ -n "$PR_URL" ] && [ "$PR_URL" != "null" ]; then
+               echo "################################################"
+               echo "## Pull Request: $PR_URL  ##"
+               echo "################################################"
+             else
+               echo "[ERROR] Failed to create Pull Request"
+               exit 1
+             fi
+        envFrom:
+          - configMapRef:
+              name: ci-cm
+        env:
+          - name: CI_BB_USER
+            valueFrom:
+              secretKeyRef:
+                name: ci-templates-es
+                key: CI_BB_USER
+          - name: CI_BB_USER_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: ci-templates-es
+                key: CI_BB_USER_TOKEN
+          - name: CI_BB_API_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: ci-templates-es
+                key: CI_BB_API_TOKEN

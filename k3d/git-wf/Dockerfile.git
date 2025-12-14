@@ -1,0 +1,5 @@
+FROM admarketplace/amp-ubuntu:24.04
+
+COPY kubectl kubectl
+RUN apt update && apt install -y git
+COPY git.sh /git.sh
