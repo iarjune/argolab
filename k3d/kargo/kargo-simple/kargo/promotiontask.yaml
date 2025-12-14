@@ -27,7 +27,7 @@ spec:
   - uses: kustomize-set-image
     as: update-image
     config:
-      path: ./k3d/kargo-simple/env/${{ ctx.stage }}
+      path: ./src/k3d/kargo/kargo-simple/env/${{ ctx.stage }}
       images:
       - image: ${{ vars.image }}
         tag: ${{ imageFrom( vars.image ).Tag }}
