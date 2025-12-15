@@ -1,0 +1,11 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: guestbook
+  namespace: kargo-simple
+spec:
+  interval: 30m
+  subscriptions:
+  - image:
+      repoURL: iarjune/argo
+      imageSelectionStrategy: SemVer

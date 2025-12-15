@@ -1,0 +1,18 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: verify
+  namespace: kargo-simple
+spec:
+  steps:
+  - uses: argo-workflow-run
+    as: run-tests
+    config:
+      templateName: guestbook-test
+      parameters:
+      - name: stage
+        value: ${{ ctx.stage }}
+      - name: namespace
+        value: guestbook-simple-${{ ctx.stage }}
+      wait: true
+      timeout: 10m
