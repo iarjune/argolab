@@ -19,7 +19,7 @@ echo "[INFO] Logging in to Kargo server ${KARGO_SERVER_URL}"
 kargo login "$KARGO_SERVER_URL" --admin --password "$KARGO_PW"
 
 echo "[INFO] Refreshing warehouse ${APP}-warehouse in project ${KARGO_PROJECT}"
-kargo refresh warehouse "$APP"-warehouse --project "$KARGO_PROJECT" --wait
+kargo refresh warehouse docker-warehouse --project "$KARGO_PROJECT" --wait
 
 TEMPLATE='{{range .items}}{{ $alias := .alias }}{{range .images}}{{if and (eq .repoURL "'"$REPO"'") (eq .tag "'"$TAG"'")}}{{ $alias }}{{"\n"}}{{end}}{{end}}{{end}}'
 ALIAS="$(kargo get freight --project "$KARGO_PROJECT" -o go-template="$TEMPLATE" | head -n1)"

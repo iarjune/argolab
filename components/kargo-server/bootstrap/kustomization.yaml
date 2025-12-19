@@ -6,3 +6,4 @@ resources:
   - dockerhub-creds.yaml 
   - git-creds.yaml
   - ldap-creds.yaml
+  - kargo-global-creds-namespace.yaml

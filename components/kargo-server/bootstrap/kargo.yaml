@@ -17,6 +17,9 @@ spec:
         controller:
           rollouts:
             integrationEnabled: true
+          globalCredentials:
+            namespaces:
+            - kargo-global-creds  
         api:
           host: kargo.ric1.admarketplace.net  # Change this to your desired hostname
           adminAccount:

@@ -4,5 +4,5 @@ docker run --rm \
   -e STAGE=dev \
   -e KARGO_SERVER_URL="https://kargo.ric1.admarketplace.net" \
   -e KARGO_PW="iIUSN4aAGVeT83odP8nb3hTI" \
-  -e KARGO_PROJECT=kargo-default-project \
+  -e KARGO_PROJECT=ci-test-python-project\
   kargo-runner
