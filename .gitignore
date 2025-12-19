@@ -1,4 +1,4 @@
 components/ignore
 creds.txt
 git.sh
-git-creds.yaml
+*creds*

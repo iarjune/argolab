@@ -1,0 +1,41 @@
+1. Apply Kargo installation:
+   kubectl apply -k .
+
+2. Wait for Kargo to be ready:
+   kubectl wait --for=condition=available --timeout=300s deployment/kargo-api -n kargo
+
+3. Access Kargo UI:
+   https://kargo.ric1.admarketplace.net
+
+4. Setup credentials (see CREDENTIALS-README.md):
+   - Create project first (uncomment project.yaml in kustomization.yaml)
+   - Then create git and docker credentials using kargo CLI or kubectl
+
+kargo config set-project kargo-default-project
+
+5. Refresh warehouse:
+kargo refresh warehouse ci-test-python-project-warehouse --wait
+   warehouse 'kargo-default-project/ci-test-python-project-warehouse' refreshed
+
+6. Get freight alias
+PROJECT="ci-test-python-project"
+REPO="docker.io/admarketplace/ci-test-python-project"
+TAG="1.12.179"
+
+TEMPLATE='{{range .items}}{{ $alias := .alias }}{{range .images}}{{if and (eq .repoURL "'"$REPO"'") (eq .tag "'"$TAG"'")}}{{ $alias }}{{"\n"}}{{end}}{{end}}{{end}}'
+ALIAS="$(kargo get freight --project "$PROJECT" -o go-template="$TEMPLATE" | head -n1)"
+
+7. Promote freight:
+kargo promote --stage=dev --freight-alias=$ALIAS --wait 
+
+
+===================================
+For Analysis Templates installed Rollouts
+kubectl create namespace argo-rollouts
+kubectl apply -n argo-rollouts   -f https://github.com/argoproj/argo-rollouts/releases/latest/download/install.yaml
+
+
+DD LOG Query:
+amp_pod_tags.datadoghq.com/env:dev AND amp_pod_tags.datadoghq.com/version:1.12.182 AND amp_pod_tags.datadoghq.com/service:ci-test-python-project
+
+Ldap configured with dex

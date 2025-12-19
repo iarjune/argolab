@@ -3,5 +3,6 @@ kind: Kustomization
 resources:
   - cert-manager.yaml
   - kargo.yaml
+  - dockerhub-creds.yaml 
   - git-creds.yaml
-  - project.yaml
+  - ldap-creds.yaml

@@ -4,8 +4,6 @@ kind: Kustomization
 resources:
 - ../../base
 
-namespace: guestbook-simple-staging
-
 images:
-- name: iarjune/argo
-  newTag: 1.0.0
+  - name: admarketplace/ci-test-python-project
+    newTag: 1.0.0

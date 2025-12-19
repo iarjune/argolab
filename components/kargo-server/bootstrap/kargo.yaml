@@ -1,0 +1,99 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kargo
+  namespace: npe-argocd
+spec:
+  project: default
+  destination:
+    namespace: kargo
+    server: https://CBAC16F2903619B2E73458F075850C71.gr7.us-east-1.eks.amazonaws.com
+  source:
+    repoURL: ghcr.io/akuity/kargo-charts
+    chart: kargo
+    targetRevision: 1.8.4   # set to the chart version you choose
+    helm:
+      valuesObject:
+        controller:
+          rollouts:
+            integrationEnabled: true
+        api:
+          host: kargo.ric1.admarketplace.net  # Change this to your desired hostname
+          adminAccount:
+            passwordHash: "$2y$10$qR.HsIBFBqsTzXsh/q.4DOPHE0zstcGldnMG.c0.tWidG2.OfNQ2q"
+            tokenSigningKey: "ydKQdEesUHGvE0Gz2c5jHWCXvyZbc9vn"
+          rollouts:
+            integrationEnabled: true
+          tls:
+            enabled: false  # Disable TLS on API server - ELB terminates SSL
+            terminatedUpstream: true  # SSL is terminated at the ELB
+          ingress:
+            enabled: true
+            ingressClassName: ssl-nlb
+            pathType: Prefix
+            annotations:
+              external-dns.alpha.kubernetes.io/ttl: "60"
+              nginx.ingress.kubernetes.io/backend-protocol: HTTP
+            tls:
+              enabled: false  # ELB handles TLS, not the ingress
+              selfSignedCert: false
+          oidc:
+            enabled: true
+            admins:
+              claims:
+                groups:
+                - team_sysops
+                - ci-admin
+            # viewers:
+            #   claims:
+            #     groups:
+            #     - confluence-users
+            # users:
+            #   claims:
+            #     groups:
+            #     - team_ci
+            # Tell Kargo to use embedded Dex
+            dex:
+              enabled: true
+              connectors:
+              - type: ldap
+                id: ldap
+                name: LDAP
+                config:
+                  host: mgmt-ldap-02.ric1.admarketplace.net:389
+                  insecureNoSSL: false
+                  insecureSkipVerify: true
+                  startTLS: true
+                  bindDN: "cn=svc_argocd,ou=SVC_Accounts,dc=admarketplace,dc=net"
+                  bindPW: "$BIND_PW"   # prefer env var (see below)
+
+                  usernamePrompt: "User ID"
+
+                  userSearch:
+                    baseDN: "ou=People,dc=admarketplace,dc=net"
+                    filter: "(objectClass=person)"
+                    username: uid
+                    idAttr: uid
+                    emailAttr: mail
+                    nameAttr: displayName
+
+                  groupSearch:
+                    baseDN: "ou=Group,dc=admarketplace,dc=net"
+                    filter: "(objectClass=groupOfNames)"
+                    userMatchers:
+                    - userAttr: DN
+                      groupAttr: member
+                    nameAttr: cn
+              env:
+              - name: BIND_PW
+                valueFrom:
+                  secretKeyRef:
+                    name: kargo-ldap
+                    key: bindPW
+            
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
