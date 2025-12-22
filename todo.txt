@@ -1,5 +1,13 @@
 DONE Build a docker image for amp-kargo
 Global credentials
+How does approval work?
+Fix verification block in kargo image 
+
+docker run --rm  -e APP=ci-test-python-project -e STAGE=dev -e TAG=2.0.380 -e KARGO_SERVER_URL="https://kargo.ric1.admarketplace.net/" -e KARGO_PW="************" -e KARGO_PROJECT=ci-test-python-project -e ALIAS=ci-test-python-project --dns 10.11.128.70 --entrypoint=bash -it -v ${PWD}/run.sh:/home/kargo/run.sh  --privileged admarketplace/amp-kargo:1.8.4 
+
+
+Datadog Query
+https://app.datadoghq.com/logs/livetail?query=service%3Aci-test-python-project%20-%22GET%20%2Fhealth%22&agg_m=count&agg_m_source=base&agg_t=count&cols=host%2Cservice&messageDisplay=inline&refresh_mode=sliding&storage=driveline&stream_sort=desc&viz=stream&from_ts=1766391755302&to_ts=1766392655302&live=true
 
 
 Promotion Steps
