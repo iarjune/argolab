@@ -23,7 +23,7 @@ spec:
         api:
           host: kargo.ric1.admarketplace.net  # Change this to your desired hostname
           adminAccount:
-            passwordHash: "$2y$10$qR.HsIBFBqsTzXsh/q.4DOPHE0zstcGldnMG.c0.tWidG2.OfNQ2q"
+            passwordHash: "$2y$10$tjHDCiV6N2VFEy3SDJIjG.vT.avgiMitkdNFeW0vPUQRQAZ/cs4Jm"
             tokenSigningKey: "ydKQdEesUHGvE0Gz2c5jHWCXvyZbc9vn"
           rollouts:
             integrationEnabled: true

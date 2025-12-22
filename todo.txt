@@ -1,0 +1,31 @@
+DONE Build a docker image for amp-kargo
+Global credentials
+
+
+Promotion Steps
+1. Pull Request Pipeline Promotes to Dev
+Merge to main builds and deploys to stage
+PR opens to release to prod
+
+Promotion Steps
+Added "Promote to Dev" step after Docker image build
+Uses admarketplace/amp-kargo:1.8.4 image
+Promotes to dev stage using the built version ($VERSION)
+2. Release Tags Pipeline
+
+Added "Promote to Staging" step after release build
+Uses admarketplace/amp-kargo:1.8.4 image
+Promotes to staging stage using the git tag version ($VERSION)
+Required Environment Variables
+The promotion steps require these Bitbucket pipeline variables:
+
+KARGO_URL - Kargo server URL
+KARGO_PASSWORD - Kargo admin password
+TAG
+APP
+STAGE
+
+Promotion Flow
+Pull Requests: Build → Push → Promote to Dev
+Release Tags: Build → Push → Promote to Staging
+The promotion steps automatically use the same version that was built and pushed in the previous step, ensuring consistency between the Docker image and the Kargo promotion.
