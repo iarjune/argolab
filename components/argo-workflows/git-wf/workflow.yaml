@@ -1,17 +1,69 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
-  generateName: my-git-clone-
+  name: ci-test-python-project-1
+  namespace: dev
+  labels:
+    testing: 'true'
 spec:
-  workflowTemplateRef:
-    name: git-clone-template
+  serviceAccountName: workflows-service
+  entrypoint: main
+  volumeClaimTemplates:
+  - metadata:
+      name: workspace
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: "efs-sc"
+      resources:
+        requests:
+          storage: 100Mi
   arguments:
     parameters:
-      - name: bb_user
-        value: ""
-      - name: bb_token
-        value: ""
-      - name: git_repo
-        value: "cd-deploy-configs"
-      - name: branch
-        value: "master"
+    - name: git_repo
+      value: ci-test-python-project
+    - name: branch
+      value: master
+  templates:
+  - name: main
+    inputs:
+      parameters:
+        - name: git_repo
+        - name: branch
+    steps:
+    - - name: git-clone
+        templateRef:
+          name: git-clone-template
+          template: main
+        arguments:
+          parameters:
+          - name: git_repo
+            value: "{{inputs.parameters.git_repo}}"
+          - name: branch
+            value: "{{inputs.parameters.branch}}"
+    - - name: ls-repo
+        template: ls-repo
+        arguments:
+          parameters:
+          - name: git_repo
+            value: "{{inputs.parameters.git_repo}}"
+  - name: ls-repo
+    inputs:
+      parameters:
+        - name: git_repo
+    container:
+      image: alpine/git
+      command: [sh, -c]
+      args:
+        - |
+          set -e
+          echo "=== Workspace contents ==="
+          ls -la /workspace
+          echo "=== Repo contents ==="
+          cd /workspace/{{inputs.parameters.git_repo}}
+          ls -la
+          echo "=== Git status ==="
+          git config --global --add safe.directory /workspace/{{inputs.parameters.git_repo}}
+          git status
+      volumeMounts:
+        - name: workspace
+          mountPath: /workspace

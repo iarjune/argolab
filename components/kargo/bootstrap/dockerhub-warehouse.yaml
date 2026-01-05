@@ -1,0 +1,43 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: dockerhub-credentials
+  namespace: kargo-global
+  labels:
+    kargo.akuity.io/credential: "true"
+type: Opaque
+stringData:
+  username: "admarketplace"
+  password: ""
+  # Optional: Add email if required by your Docker Hub setup
+  # email: "ci@admarketplace.com"
+
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: dockerhub-warehouse
+  namespace: kargo-simple
+spec:
+  subscriptions:
+  - image:
+      repoURL: docker.io/admarketplace
+      semverConstraint: "*"
+      allowTags: "^v?[0-9]+\\.[0-9]+\\.[0-9]+$"
+  # Reference the global DockerHub credentials
+  auth:
+    type: Docker
+    docker:
+      username:
+        valueFrom:
+          secretKeyRef:
+            name: dockerhub-credentials
+            namespace: kargo-global
+            key: username
+      password:
+        valueFrom:
+          secretKeyRef:
+            name: dockerhub-credentials
+            namespace: kargo-global
+            key: password
