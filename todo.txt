@@ -369,3 +369,12 @@ https://AC4F52705925C150682D31A14AEC7B5E.gr7.us-east-1.eks.amazonaws.com stage r
 https://3BB77FF9BAD81494505D94A0CF4C93CC.gr7.us-west-2.eks.amazonaws.com stage pdx1
 https://5A31B3F2C174384D125E5F7A463AE847.gr7.us-east-1.eks.amazonaws.com prod ric1
 https://02D67AAB4E73665DEA76121909C80BCB.gr7.us-west-2.eks.amazonaws.com prod pdx1
+
+
+The most ArgoCD-native approach is:
+
+Use ApplicationSets + cluster labels
+
+Encode deployment topology (clusters, DCs, envs) in ArgoCD
+
+Keep developer-owned config intent-based, not infra-targeting
