@@ -29,7 +29,8 @@ Move argowf logic from the bitbucket-pipeline into the container
 Init all vars before kicking off the wf
 Create a new argocd app for stage that provisions ric1 and pdx1
   Lets see if kargo can handle this
-  Also how does argocd cli handle this?
+  Docs say to use selecors in kargo config so it can find all apps to promote.
+DONE replace app deploymenta with appset to better handle the env and cluster selector issues
 #######################
 #######################
 
