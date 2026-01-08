@@ -31,6 +31,7 @@ Create a new argocd app for stage that provisions ric1 and pdx1
   Lets see if kargo can handle this
   Docs say to use selecors in kargo config so it can find all apps to promote.
 DONE replace app deploymenta with appset to better handle the env and cluster selector issues
+add emphemeral flag/var  to disable app delete feat
 #######################
 #######################
 
