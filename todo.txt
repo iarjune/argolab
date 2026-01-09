@@ -5,12 +5,12 @@ DONE Global credentials
 How does approval work?
 DONE Fix verification block in kargo image 
 DONE Downgrade ci-docker-argocd-cli
-Big question, should we normalize this staging to stage name.  Its getting messy.
-create wf for promotion
+DONE Big question, should we normalize this staging to stage name.  Its getting messy.
+DONEcreate wf for promotion
   DONE add BB workspace variables ARGOWORKFLOW_HOST, ARGOWORKFLOW_TOKEN
   DONE use admarketplace/amp-argowf-cli:3.5
   DONE add container details for the promotion steps
-  Still need global creds for git and docker
+  DONEStill need global creds for git and docker
 Add argo wf to bitbucket pipeline promote step 
   setup argowf-cli container with new run.sh for this use case
   submit wf to argo
@@ -26,18 +26,15 @@ Move promotion tasks to global promotion tasks
 remove kargo-cluster-secrets from the kargo deployment
 BUG FIX: The cd-promote template has the dest server hardcoded and the namespace for stage is getting set to staging
 Move argowf logic from the bitbucket-pipeline into the container
-<<<<<<< HEAD
 Init all vars before kicking off the wf
 Create a new argocd app for stage that provisions ric1 and pdx1
   Lets see if kargo can handle this
   Docs say to use selecors in kargo config so it can find all apps to promote.
 DONE replace app deploymenta with appset to better handle the env and cluster selector issues
-add emphemeral flag/var  to disable app delete feat
-=======
-The pvc are not getting deleted after the workflow is completed
+IN PROGRESSadd emphemeral flag/var  to disable app delete feature
+DONE The pvc are not getting deleted after the workflow is completed.  Moved to a persistent volume claim
 
 
->>>>>>> 0ea4337 (up)
 #######################
 #######################
 
