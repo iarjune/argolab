@@ -46,7 +46,7 @@ create fall back process
 find candidate 
 ensure stable dev workflow 
 Create Stack ApplicationSet for Stage tests
-
+ 
 
 
 #######################
