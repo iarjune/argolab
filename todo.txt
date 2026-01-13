@@ -6,47 +6,60 @@ How does approval work?
 DONE Fix verification block in kargo image 
 DONE Downgrade ci-docker-argocd-cli
 DONE Big question, should we normalize this staging to stage name.  Its getting messy.
-DONEcreate wf for promotion
+DONE create wf for promotion
   DONE add BB workspace variables ARGOWORKFLOW_HOST, ARGOWORKFLOW_TOKEN
   DONE use admarketplace/amp-argowf-cli:3.5
   DONE add container details for the promotion steps
-  DONEStill need global creds for git and docker
-Add argo wf to bitbucket pipeline promote step 
-  setup argowf-cli container with new run.sh for this use case
-  submit wf to argo
-  argo log -f the wf 
-How will the kargo project get created.
-  Manifest lives with the deployment configs, in gitops.  
-  We should create the kargo project at service onboarding
-  This means the app still needs cd-releases config for the kargo project, but not for npe deployments
-Add dd log link to BB report
-Add BitBucket Deployment Tracking 
+  DONE Still need global creds for git and docker
+DONE Add argo wf to bitbucket pipeline promote step 
+  DONE setup argowf-cli container with new run.sh for this use case
+  DONE submit wf to argo
+  DONE argo log -f the wf 
+
+DONE Add BitBucket Deployment Tracking 
 Move the storage driver install to IAC
-Move promotion tasks to global promotion tasks
+DONE Move promotion tasks to global promotion tasks
   https://docs.kargo.io/user-guide/reference-docs/promotion-tasks/#defining-a-global-promotion-task
-remove kargo-cluster-secrets from the kargo deployment
-BUG FIX: The cd-promote template has the dest server hardcoded and the namespace for stage is getting set to staging
+  dev cluster new namespace kargo-global
+  deployment in cd-deploy-configs/components/kargo-global-promotiontasks/
+  TODO: Add cd-releases config for kargo-global.  It gets applied to the mgmt cluster
+remove kargo-cluster-secrets namespace from the kargo deployment
+DONE BUG FIX: The cd-promote template has the dest server hardcoded and the namespace for stage is getting set to staging
 Move argowf logic from the bitbucket-pipeline into the container
 DONE Init all vars before kicking off the wf. refactored to normalize var names
 DONE global deployment vs ric1 only.
   kargo promotion wirks with a selecor, but argocd sync taak doesn't support tge selector, so using a param in the stage.yaml config deployWest=true. pdx1 only isn't yet supported
 DONE replace app deploymenta with appset to better handle the env and cluster selector issues
-IN PROG add emphemeral flag/var  to disable app delete feature
-IN PROG Fix Demo IT test global validation.
+DONE add emphemeral flag/var  to disable app delete feature
+DONE Fix Demo IT test global validation.
 DONE The pvc are not getting deleted after the workflow is completed.  Moved to a persistent volume claim.  The manifest is in infra deploy configs
-Create promotion that promotes east, validates east, promotes West, validates weat
-Add timeout param for wait-argocd-app task
+DONE Create promotion that promotes east, validates east, promotes West, validates weat
+DONE Add timeout param for wait-argocd-app task
 Add Branch deployment logic
 Add PR pipeline 
 Create Argo WF AnalysisTemplate 
 Add new pipeline to onboarding 
 Add step in onboarding workflow to create promotion configs
-Onboarding process
-create fall back process 
-find candidate 
-ensure stable dev workflow 
-Create Stack ApplicationSet for Stage tests
- 
+Develop Demo Slides
+Develop Onboarding Guide
+  Add fallback process 
+  Find guinea pig 
+Create Stack ApplicationSet to demo the Stage IT tests with Kustomize overlays
+Add Jira integration for release tracking.
+Add build tag and sha commit message for the git_commit step in the promotiontask.yaml
+Test senarios, dev only, stage ric1 only, stage global, ephemeral on & off, , 
+Add Kargo promotion manifest creation to service onboarding .
+  Manifest lives with the deployment configs, in gitops.  
+  We should create the kargo project at service onboarding
+  This means the app still needs cd-releases config for the kargo project, but not for npe deployments
+Add Prod promotion task that opens a PR
+Add dd log link to BB report
+Pull promote-configs out of DECOM
+
+
+NOTE: Stage PDX1 only deployment is not supported.
+NOTE: When condition  to skip the appset creation and wait steps is not working
+
 
 
 #######################
@@ -106,92 +119,19 @@ steps:
 
 #######################
 #######################
-#EFS CSI Driver Setup
-#Fix Bugged Role AmazonEKS_EFS_CSI_DriverRole by using a wildcard for the sa name 
-ACCOUNT_ID=564079877134
-OIDC_ID=810C5935E63AEA0039E695BACDEA9D4B
-ROLE_NAME=AmazonEKS_EFS_CSI_DriverRole
-ISSUER="oidc.eks.us-east-1.amazonaws.com/id/${OIDC_ID}"
-PROVIDER_ARN="arn:aws:iam::${ACCOUNT_ID}:oidc-provider/${ISSUER}"
-CLUSTER=eks-dev-use1-01
-REGION=us-east-1
-PROFILE=dev
 
-cat > /tmp/efs-csi-trust.json <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": { "Federated": "${PROVIDER_ARN}" },
-      "Action": "sts:AssumeRoleWithWebIdentity",
-      "Condition": {
-        "StringLike": {
-          "${ISSUER}:sub": "system:serviceaccount:kube-system:efs-csi-*"
-        },
-        "StringEquals": {
-          "${ISSUER}:aud": "sts.amazonaws.com"
-        }
-      }
-    }
-  ]
-}
-EOF
-
-aws iam update-assume-role-policy \
-  --profile $PROFILE \
-  --role-name "$ROLE_NAME" \
-  --policy-document file:///tmp/efs-csi-trust.json
-
-
-#Install aws-efs-csi-driver into eks-dev-use1-01
-  eksctl create iamserviceaccount \
-  --cluster "$CLUSTER" \
-  --namespace kube-system \
-  --name efs-csi-controller-sa \
-  --role-name AmazonEKS_EFS_CSI_DriverRole \
-  --attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEFSCSIDriverPolicy \
-  --role-only \
-  --approve --profile dev --region us-east-1
-
-  aws eks create-addon \
-  --region "$REGION" \
-  --cluster-name "$CLUSTER" \
-  --addon-name aws-efs-csi-driver \
-  --service-account-role-arn arn:aws:iam::${ACCOUNT_ID}:role/AmazonEKS_EFS_CSI_DriverRole \
-  --resolve-conflicts OVERWRITE --profile dev --region us-east-1
-  
-  aws eks describe-addon   --cluster-name $CLUSTER   --addon-name aws-efs-csi-driver   --query "addon.serviceAccountRoleArn"   --output text --profile dev --region us-east-1
-  
-  kubectl -n kube-system get sa efs-csi-controller-sa -o yaml | grep -i eks.amazonaws.com/role-arn -n
-  
-  kubectl -n kube-system get pods -l app.kubernetes.io/name=aws-efs-csi-driver
-
-#Created a new efs volume
-aws efs create-file-system   --profile $PROFILE --region $REGION   --encrypted   --tags Key=Name,Value=eks-efs Key=owner,Value=eks
-aws efs describe-file-systems   --profile $PROFILE --region $REGION   --query "FileSystems[?Name=='eks-efs'].FileSystemId"   --output text
-fs-0eedbe9717dcbb076
-
-#Added tags to the efs volume to be repurposed for EKS CSI driver
-aws ec2 create-tags \
-  --profile $PROFILE --region $REGION \
-  --resources sg-02ad08bc1905e3023 \
-  --tags Key=Purpose,Value="EKS CSI Driver EFS Mounts"
-
-#Create mount targets in all 3 subnets
-FS_ID=fs-0eedbe9717dcbb076
-SG_ID=sg-02ad08bc1905e3023
-
-for subnet in subnet-0a3cb949a8af631d2 subnet-05f1dc5d674c61d34 subnet-0f7c62853e5345637; do
-  aws efs create-mount-target \
-    --profile $PROFILE --region $REGION \
-    --file-system-id "$FS_ID" \
-    --subnet-id "$subnet" \
-    --security-groups "$SG_ID"
-done
 
 #######################
 #######################
+PATHS:
+Kargo Install: infra-deploy-configs/apps/kargo/kargo.yaml
+Kargo Global Promotion Tasks: cd-deploy-configs/components/kargo-global-promotiontasks/
+Kargo Global Credentials: infra-deploy-configs/kargo/global-creds/
+CD Promotion Workflow Template: infra-deploy-configs/cd-promote-templates/
+Application local promotion configs: cd-deploy-configs/apps/<project>/promotion-configs/
+Application local ApplicationSet: cd-deploy-configs/apps/<project>/release-configs/<project>-<stage>.yaml
+Global ApplicationSet and cluster generator: cd-releases/dev/ric1/DECOM/kargo-projects.yaml
+EFS CSI Driver Install: infra-deploy-configs/apps/efs-storage-driver/
 
 Components:
 Kargo server
@@ -246,9 +186,11 @@ kargo-projects
     https://bitbucket.org/admarketplace/cd-releases/src/master/dev/ric1/kargo-projects.yaml
     discovered by regex path to app/*/promotion-configs
 
-Arog Rollouts AnalysisTemplate credentials
+Argo Rollouts AnalysisTemplate
   Used by Kargo to validate the promotion
   https://bitbucket.org/admarketplace/infra-deploy-configs/src/master/apps/argorollouts/
+
+
 
 #######################
 #######################
