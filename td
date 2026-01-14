@@ -1,0 +1,365 @@
+DONE Argo cd RBAC and SA User cicd
+DONE Akeyless /ci-templates/dev/ric1/ci_npe_argocd_token
+DONE Build a docker image for amp-kargo
+DONE Global credentials
+How does approval work?
+DONE Fix verification block in kargo image 
+DONE Downgrade ci-docker-argocd-cli
+DONE Big question, should we normalize this staging to stage name.  Its getting messy.
+DONE create wf for promotion
+  DONE add BB workspace variables ARGOWORKFLOW_HOST, ARGOWORKFLOW_TOKEN
+  DONE use admarketplace/amp-argowf-cli:3.5
+  DONE add container details for the promotion steps
+  DONE Still need global creds for git and docker
+DONE Add argo wf to bitbucket pipeline promote step 
+  DONE setup argowf-cli container with new run.sh for this use case
+  DONE submit wf to argo
+  DONE argo log -f the wf 
+
+DONE Add BitBucket Deployment Tracking 
+Move the storage driver install to IAC
+DONE Move promotion tasks to global promotion tasks
+  https://docs.kargo.io/user-guide/reference-docs/promotion-tasks/#defining-a-global-promotion-task
+  dev cluster new namespace kargo-global
+  deployment in cd-deploy-configs/components/kargo-global-promotiontasks/
+  TODO: Add cd-releases config for kargo-global.  It gets applied to the mgmt cluster
+remove kargo-cluster-secrets namespace from the kargo deployment
+DONE BUG FIX: The cd-promote template has the dest server hardcoded and the namespace for stage is getting set to staging
+Move argowf logic from the bitbucket-pipeline into the container
+DONE Init all vars before kicking off the wf. refactored to normalize var names
+DONE global deployment vs ric1 only.
+  kargo promotion wirks with a selecor, but argocd sync taak doesn't support tge selector, so using a param in the stage.yaml config deployWest=true. pdx1 only isn't yet supported
+DONE replace app deploymenta with appset to better handle the env and cluster selector issues
+DONE add emphemeral flag/var  to disable app delete feature
+DONE Fix Demo IT test global validation.
+DONE The pvc are not getting deleted after the workflow is completed.  Moved to a persistent volume claim.  The manifest is in infra deploy configs
+DONE Create promotion that promotes east, validates east, promotes West, validates weat
+DONE Add timeout param for wait-argocd-app task
+Add Branch deployment logic
+  The var enables a suffix on the path env/dev-ric1-$branch
+Add PR pipeline 
+Create Argo WF AnalysisTemplate 
+Add new pipeline to onboarding 
+Add step in onboarding workflow to create promotion configs
+Develop Demo Slides
+  hl overview
+  
+Develop Onboarding Guide
+  Add fallback process 
+  Find guinea pig 
+Create Stack ApplicationSet to demo the Stage IT tests with Kustomize overlays
+Add Jira integration for release tracking.
+Add build tag and sha commit message for the git_commit step in the promotiontask.yaml
+Test senarios, dev only, stage ric1 only, stage global, ephemeral on & off, , 
+Add project manifest creation to service onboarding
+  Add new pipeline to onboarding
+  Add step in onboarding workflow to create promotion configs and cicd.props
+BACKLOG: Add dd log link to BB report
+Pull promote-configs out of DECOM
+kargo project creation
+GO LIVE: pin docker image version for cli tooling
+Ensure stage promotion is blocked if dev or prod fails
+
+BACK LOG: Separate dev and stage in the cd promote workflow so in bb we can define different staging profiles
+
+Documentation
+  Admin guide
+    see components below
+  Users guide
+    variables
+    onboarding guide
+    stage manipulation
+    ephemeral env toggle
+    Deployment verification
+  troubleshooting guide 
+  diagram of development workflow
+  diagram of system components
+  
+  
+
+NOTE: Stage PDX1 only deployment is not supported.
+NOTE: When condition  to skip the appset creation and wait steps is not working
+
+
+
+#######################
+#######################
+
+Goal:
+Create a build and deployment pipeline that will auto promote builds to dev and stage.
+
+Requirements:
+Bitbucket pipeline will run the 3 phases: build, promote to dev and promote to stage
+The build phase runs in bitbucket runners
+The promotion phase runs in argo workflows 
+
+Promotion Workflow: 
+
+Dynamically create the argocd app using the argocd cli
+- Check if the argocd app exists using the argocd list command 
+  - If true, skip this step
+- Checkout cd-deploy-configs repo
+- Check if /apps/<project>/env/<stage> exists
+  - If false, fail the workflow
+  - If true, create the argocd app using the argocd create command
+
+Promote to DEV 
+- Using kargo-cli, promote the build to dev by gitops
+- Using kargo-cli, run analysis to verify the app is ready to be promoted
+
+Post promotion to DEV
+- Delete the argocd app using the argocd delete command
+
+Repete this process for staging
+
+Required Parameters
+parameters:
+- name: project_name        # Project/app name (e.g., ci-test-python-project)
+- name: stage              # Environment (dev/staging)
+- name: build_tag          # Docker image tag or build version
+- name: argocd_env         # ArgoCD environment (npe/prod)
+- name: kargo_project      # Kargo project name
+- name: git_branch         # Git branch for cd-deploy-configs
+
+Workflow Structure
+entrypoint: cd-promote
+steps:
+- - name: check-app-exists
+    template: check-argocd-app
+- - name: validate-config
+    template: validate-git-config
+- - name: create-app
+    template: create-argocd-app
+- - name: promote-with-kargo
+    template: kargo-promote
+- - name: analyze-promotion
+    template: kargo-analyze
+- - name: cleanup-app
+    template: delete-argocd-app
+
+#######################
+#######################
+
+
+#######################
+#######################
+PATHS:
+Kargo Install: infra-deploy-configs/apps/kargo/kargo.yaml
+Kargo Global Promotion Tasks: cd-deploy-configs/components/kargo-global-promotiontasks/
+Kargo Global Credentials: infra-deploy-configs/kargo/global-creds/
+CD Promotion Workflow Template: infra-deploy-configs/cd-promote-templates/
+Application local promotion configs: cd-deploy-configs/apps/<project>/promotion-configs/
+Application local ApplicationSet: cd-deploy-configs/apps/<project>/release-configs/<project>-<stage>.yaml
+Global ApplicationSet and cluster generator: cd-releases/dev/ric1/DECOM/kargo-projects.yaml
+EFS CSI Driver Install: infra-deploy-configs/apps/efs-storage-driver/
+
+Components:
+Kargo server
+  https://bitbucket.org/admarketplace/infra-deploy-configs/src/main/apps/kargo/
+amp-kargo cli docker image
+	sa user and token
+	Trigger promotion to dev or staging
+  https://bitbucket.org/admarketplace/ci-docker-kargo/src/1.8.4/
+amp-argocd-cli docker image
+	sa user and token
+	ArgoCD application resource creation and deletion step
+  https://bitbucket.org/admarketplace/ci-docker-argocd-cli/src/2.12/
+amp-argowf-cli docker image
+	Trigger promotion pipeline that creates app, runs promote, validates app, deletes app
+  https://bitbucket.org/admarketplace/ci-docker-argowf-cli/pipelines
+Bitbucket pipeline
+	runs cd-promote-template workflow for dev and staging promotion steps
+  TODO: PR Workflow
+ArgoWF CD Promote Templates
+  https://bitbucket.org/admarketplace/infra-deploy-configs/src/main/apps/cd-promote-templates/
+  git-templates
+    git clone template
+  cd-promote-template
+    check-app-exists
+    validate-config - cd-deploy-configs validation
+    create-argocd-app
+    sync-argocd-app
+    wait-argocd-app
+    promote-with-kargo
+    cleanup-app
+  argocd-cli-template
+    create-app template
+    delete-app template
+    sync-app template
+    wait-app template
+    check-app template
+  kargo-cli-template
+    kargo-promote template
+TODO: Service On-boarding
+	 scaffold generation
+EFS CSI Driver for EKS
+  add to infra-deploy-configs and add path here
+  added efs storage class
+  not required but added to pass cd-deploy-configs validation
+Datadog Query
+  https://app.datadoghq.com/logs/livetail?query=service%3Aci-test-python-project%20-%22GET%20%2Fhealth%22&agg_m=count&agg_m_source=base&agg_t=count&cols=host%2Cservice&messageDisplay=inline&refresh_mode=sliding&storage=driveline&stream_sort=desc&viz=stream&from_ts=1766391755302&to_ts=1766392655302&live=true
+
+kargo-projects
+  cd-deploy-configs/apps/<app>/promotion-configs
+  each application has its own kargo project configs, defining individual promotion stuff
+  The kargo-projects-generator is an applicationset in cd-releases that automatically creates the argocd app for each kargo projects
+    https://bitbucket.org/admarketplace/cd-releases/src/master/dev/ric1/kargo-projects.yaml
+    discovered by regex path to app/*/promotion-configs
+
+Argo Rollouts AnalysisTemplate
+  Used by Kargo to validate the promotion
+  https://bitbucket.org/admarketplace/infra-deploy-configs/src/master/apps/argorollouts/
+
+
+
+#######################
+#######################
+
+
+
+docker run --rm  -e APP=ci-test-python-project -e STAGE=dev -e TAG=2.0.380 -e KARGO_SERVER_URL="https://kargo.ric1.admarketplace.net/" -e KARGO_PW="************" -e KARGO_PROJECT=ci-test-python-project -e ALIAS=ci-test-python-project --dns 10.11.128.70 --entrypoint=bash -it -v ${PWD}/run.sh:/home/kargo/run.sh  --privileged admarketplace/amp-kargo:1.8.4 
+
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJhcmdvY2QiLCJzdWIiOiJjaWNkOmFwaUtleSIsIm5iZiI6MTc2NjgwMTc0MywiaWF0IjoxNzY2ODAxNzQzLCJqdGkiOiI1NWE2MjY2MC01YzNlLTQ0N2ItOTFlYS0wNjUxNjc1MzAzYmQifQ.sHVcdhGLeYo5McQrS4BtdImx6yuSb-vyS0_hSa3CR9Q
+argocd app list --server argocd-server.npe-argocd.svc.cluster.local:80 --plaintext --auth-token $ARGOCD_TOKEN
+argocd app list --server mgmt-npe-argo.ric1.admarketplace.net:80 --plaintext --auth-token $ARGOCD_TOKEN
+argocd app create test-app --repo git@bitbucket.org:admarketplace/cd-deploy-configs.git --path apps/ci-test-python-project/env/dev --dest-server https://810C5935E63AEA0039E695BACDEA9D4B.gr7.us-east-1.eks.amazonaws.com --dest-namespace dev --auth-token $ARGOCD_TOKEN
+argocd app delete test-app  --auth-token $ARGOCD_TOKEN --server mgmt-npe-argo.ric1.admarketplace.net:80 --plaintext -y
+
+# Start port-forward in the background
+# kubectl -n argocd port-forward svc/argocd-server 8443:443 >/tmp/argocd-pf.log 2>&1 &
+# PF_PID=$!
+# trap "kill $PF_PID" EXIT
+# sleep 3
+
+# Check if app exists before creating it again
+# the goal of cicd with argo is to launch a service after a build.  
+# THe pipeline will trigger a argo wf with the following params.  These params are passed to create the deployment configs and app in argocd.
+#   service name
+#   service version
+
+# The pipeline steps
+# Checkout project
+# Import cicd.properties
+#   DEPLOY_KIND = deployment
+#   DEPLOY_DATACENTERS=ric1,pdx1
+#   DEPLOY_ENVS = dev,stage
+#   DEPLOY_DECOM=false
+#   DEPLOY_VARIANT=false
+# Checkout cd-deploy-configs
+# Check if deployment config exists, if not create it in cd-deploy-configs/apps/<service name>/dev-ric1/
+# Checkout cd-releases
+# Check if app exists, if not create it in cd-releases/dev/ric1/dev-<service name>.yaml
+# The image tag is configured with the app manifest
+# Deploy the app to argocd
+
+
+
+# Deployment defaults: 
+# * dest-server: dev ric1
+# * dest-namespace: dev
+# * sync-policy is automated
+# * auto-prune is true
+# * self-heal is true
+# * sync-option CreateNamespace is true
+
+
+ARGOCD_AUTH_TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJhcmdvY2QiLCJzdWIiOiJjaWNkOmFwaUtleSIsIm5iZiI6MTc2NTIyODA5MCwiaWF0IjoxNzY1MjI4MDkwLCJqdGkiOiI2MDg5ZGUyMC1jYjQ4LTQ5NjgtODQ1Yy01NjU3NmIyMTNjNTYifQ.OUX3ob5Ya09xD-VMipEtwGGmJxijtDs_73bHI6MRjZw"
+
+AKEYLESS 
+/ci-templates/dev/ric1/ci_npe_argocd_token
+
+# Use token instead of username/password
+ARGOCD_SERVER="localhost:8443"
+ARGOCD_AUTH_TOKEN="$ARGOCD_AUTH_TOKEN"   # from CI secret
+APP_NAME="test-app"
+
+argocd app create test-app \
+  --server "$ARGOCD_SERVER" \
+  --auth-token "$ARGOCD_AUTH_TOKEN" \
+  --insecure \
+  --project default \
+  --repo https://github.com/iarjune/argolab.git \
+  --revision main \
+  --path apps/test-app \
+  --dest-server https://kubernetes.default.svc \
+  --dest-namespace default \
+  --sync-policy automated \
+  --auto-prune \
+  --self-heal \
+  --sync-option CreateNamespace=true
+
+
+# argocd app set argocd/test-app --kustomize-image nginx:1.25-alpine
+
+argocd app sync "$APP_NAME" \
+  --server "$ARGOCD_SERVER" \
+  --auth-token "$ARGOCD_AUTH_TOKEN" \
+  --insecure \
+  --prune --timeout 600
+
+
+argocd app wait "$APP_NAME" \
+  --server "$ARGOCD_SERVER" \
+  --auth-token "$ARGOCD_AUTH_TOKEN" \
+  --insecure \
+  --sync --health --timeout 600
+
+
+Datadog Query
+https://app.datadoghq.com/logs/livetail?query=service%3Aci-test-python-project%20-%22GET%20%2Fhealth%22&agg_m=count&agg_m_source=base&agg_t=count&cols=host%2Cservice&messageDisplay=inline&refresh_mode=sliding&storage=driveline&stream_sort=desc&viz=stream&from_ts=1766391755302&to_ts=1766392655302&live=true
+
+
+Promotion Steps
+1. Pull Request Pipeline Promotes to Dev
+Merge to main builds and deploys to stage
+PR opens to release to prod
+
+Promotion Steps
+Added "Promote to Dev" step after Docker image build
+Uses admarketplace/amp-kargo:1.8.4 image
+Promotes to dev stage using the built version ($VERSION)
+2. Release Tags Pipeline
+
+Added "Promote to Staging" step after release build
+Uses admarketplace/amp-kargo:1.8.4 image
+Promotes to staging stage using the git tag version ($VERSION)
+Required Environment Variables
+The promotion steps require these Bitbucket pipeline variables:
+
+KARGO_URL - Kargo server URL
+KARGO_PASSWORD - Kargo admin password
+TAG
+APP
+STAGE
+
+Promotion Flow
+Pull Requests: Build → Push → Promote to Dev
+Release Tags: Build → Push → Promote to Staging
+The promotion steps automatically use the same version that was built and pushed in the previous step, ensuring consistency between the Docker image and the Kargo promotion.
+
+
+argo submit --from workflowtemplate/cd-promote-template   -p project_name=ci-test-python-project   -p stage=dev   -p build_tag=2.0.389   -p kargo_project=ci-test-python-project   -p git_branch=master
+argo logs -f cd-promote-template-8b6z8
+
+
+For app creation we will itterate over DEPLOY_DATACENTERS * DEPLOY_ENVS
+DEPLOY_DATACENTERS = [ric1,pdx1]
+DEPLOY_ENVS = [off,dev,stage,prod]
+DEPLOY_DECOM = <true|false>
+DEPLOY_VARIANTS = <true|false>
+
+
+https://810C5935E63AEA0039E695BACDEA9D4B.gr7.us-east-1.eks.amazonaws.com dev ric1
+https://AC4F52705925C150682D31A14AEC7B5E.gr7.us-east-1.eks.amazonaws.com stage ric1
+https://3BB77FF9BAD81494505D94A0CF4C93CC.gr7.us-west-2.eks.amazonaws.com stage pdx1
+https://5A31B3F2C174384D125E5F7A463AE847.gr7.us-east-1.eks.amazonaws.com prod ric1
+https://02D67AAB4E73665DEA76121909C80BCB.gr7.us-west-2.eks.amazonaws.com prod pdx1
+
+
+The most ArgoCD-native approach is:
+
+Use ApplicationSets + cluster labels
+
+Encode deployment topology (clusters, DCs, envs) in ArgoCD
+
+Keep developer-owned config intent-based, not infra-targeting
