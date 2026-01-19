@@ -1,3 +1,11 @@
+
+
+Major decision.
+How to handle variants with promotion tasks
+while updating the git tag we also update the promotion manifest
+super hacky
+we can add a var to the promotion task to 
+
 DONE Argo cd RBAC and SA User cicd
 DONE Akeyless /ci-templates/dev/ric1/ci_npe_argocd_token
 DONE Build a docker image for amp-kargo
@@ -32,10 +40,36 @@ DONE Add timeout param for wait-argocd-app task
 DONE Move kargo-promote delay functino to the kargo template and added delay input param
 DONE Add Branch deployment logic
 DONE Add PR pipeline 
+DONE PR and Default pipelines are both triggered due to bitbucket wonky pipeline configurations.  THe only way to prevent this is to fail fast the pipeline that is out of place.
+    Added to the Init step: in the python bitbucket-pipeline.yml
+              # Check if this is a PR pipeline and validate destination branch
+              if [ -n "${BITBUCKET_PR_DESTINATION_BRANCH}" ]; then            
+                if [ "${BITBUCKET_PR_DESTINATION_BRANCH}" != "master" ] && [ "${BITBUCKET_PR_DESTINATION_BRANCH}" != "main" ]; then 
+                  echo "ERROR: PR promotions are only allowed to master or main branches."
+                  echo "Current destination branch: ${BITBUCKET_PR_DESTINATION_BRANCH}"
+                  exit 1
+                fi
+              fi
+
+
+
 
 =====
 TODO
 =====
+
+DONE Creating the env with appset is not working as expected.  If the version in cd-deploy-configs is broken, the app wont show health and the step wont proceed.
+Fix the image promotion logic to use the correct image tag with variant suffix
+Revise variant logic.  
+  PR builds can use both methods.  Use BITBUCKET_PR_DESTINATION_BRANCH to determine if it's a PR build or not
+  If it's a PR build, use then use ENABLE_VARIANT_CONFIGS parameter to decide which method to use
+  For non-PR builds, Feature branch promotions, should default ENABLE_VARIANT_CONFIGS to true.
+  We need to ensure that when variant is true then the config path is properly set
+
+all builds should default to variants builds to avoid conflicts between variants.
+The option to disable variants is provided for backward compatibility 
+
+BUG: cd-promote-template wait-app Error: invalid argument "--timeout"
 
 How does approval work?
 Create Argo WF AnalysisTemplate 
@@ -67,6 +101,7 @@ Create Documentation
     stage manipulation
     ephemeral env toggle
     Deployment verification
+    Deployment strategy
     Feature Branch Variant Promotions to Dev.  Standard dev vs variant dev
   troubleshooting guide 
   diagram of development workflow
@@ -77,6 +112,8 @@ Create Documentation
 
 Test senarios, dev only, stage ric1 only, stage global, ephemeral on & off, , 
 
+
+BACKLOG: Verification phase is too slow
 BACKLOG: Separate dev and stage in the cd promote workflow so in bb we can define different staging profiles
 BACKLOG: Create Stack ApplicationSet to demo the Stage IT tests with Kustomize overlays
 BACKLOG: Add Jira integration for release tracking.
