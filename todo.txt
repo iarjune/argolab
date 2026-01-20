@@ -70,7 +70,7 @@ all builds should default to variants builds to avoid conflicts between variants
 The option to disable variants is provided for backward compatibility 
 
 BUG: cd-promote-template wait-app Error: invalid argument "--timeout"
-
+  
 How does approval work?
 Create Argo WF AnalysisTemplate 
 Promotion Pipeline Onboarding
