@@ -58,6 +58,7 @@ DONE PR and Default pipelines are both triggered due to bitbucket wonky pipeline
 TODO
 =====
 
+BUG: Kargo promotion is not skipping pdx1 stage if it not defined.
 DONE Creating the env with appset is not working as expected.  If the version in cd-deploy-configs is broken, the app wont show health and the step wont proceed.
 Fix the image promotion logic to use the correct image tag with variant suffix
 Revise variant logic.  
