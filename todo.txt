@@ -58,30 +58,36 @@ DONE PR and Default pipelines are both triggered due to bitbucket wonky pipeline
 TODO
 =====
 
-BUG: Kargo promotion is not skipping pdx1 stage if it not defined.
+DONE Kargo promotion is not skipping pdx1 stage if it not defined.
 DONE Creating the env with appset is not working as expected.  If the version in cd-deploy-configs is broken, the app wont show health and the step wont proceed.
-Fix the image promotion logic to use the correct image tag with variant suffix
-Revise variant logic.  
+DONE Fix the image promotion logic to use the correct image tag with variant suffix
+DONE Revise variant logic.  
   PR builds can use both methods.  Use BITBUCKET_PR_DESTINATION_BRANCH to determine if it's a PR build or not
   If it's a PR build, use then use ENABLE_VARIANT_CONFIGS parameter to decide which method to use
   For non-PR builds, Feature branch promotions, should default ENABLE_VARIANT_CONFIGS to true.
   We need to ensure that when variant is true then the config path is properly set
 
-all builds should default to variants builds to avoid conflicts between variants.
-The option to disable variants is provided for backward compatibility 
+DONE all builds should default to variants builds to avoid conflicts between variants.
+DONE The option to disable variants is provided for backward compatibility 
 
 BUG: cd-promote-template wait-app Error: invalid argument "--timeout"
-  
+
+DONE how to build only DEv. Only PR deploys to stage
+See if we can pass the dd query in from cicd.prop
+
+Promotion to Prod retags the same image so its not rebuilt in main
+Cookiecutter use raw to block off metadata and server kustomize vars in the applicationset
 How does approval work?
 Create Argo WF AnalysisTemplate 
+create wf to blow away persistentvolume for break glass operation
 Promotion Pipeline Onboarding
   Add Kargo promotion manifest creation to service onboarding .
-  Manifest lives with the deployment configs, in gitops.  
-  We should create the kargo project at service onboarding
+  Manifest lives with the PROJECTS deployment config
   This means the app still needs cd-releases config for the kargo project, but not for npe deployments
   Add project manifest creation to service onboarding
   Add new pipeline to onboarding
   Add step in onboarding workflow to create promotion configs and cicd.props
+  enable and reconfigure bb deployment feat 
 Ensure stage promotion is blocked if dev or prod fails  
 Add new pipeline to onboarding 
 Add step in onboarding workflow to create promotion configs
