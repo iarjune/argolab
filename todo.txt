@@ -1,11 +1,4 @@
 
-
-Major decision.
-How to handle variants with promotion tasks
-while updating the git tag we also update the promotion manifest
-super hacky
-we can add a var to the promotion task to 
-
 DONE Argo cd RBAC and SA User cicd
 DONE Akeyless /ci-templates/dev/ric1/ci_npe_argocd_token
 DONE Build a docker image for amp-kargo
@@ -75,12 +68,20 @@ BUG: cd-promote-template wait-app Error: invalid argument "--timeout"
 DONE how to build only DEv. Only PR deploys to stage
 See if we can pass the dd query in from cicd.prop
 
+Feature Br. builds only Unit test
+PR Builds deploy to Dev and Stage
 Promotion to Prod retags the same image so its not rebuilt in main
+
 Cookiecutter use raw to block off metadata and server kustomize vars in the applicationset
 How does approval work?
 Create Argo WF AnalysisTemplate 
 create wf to blow away persistentvolume for break glass operation
+tag templates when done, and update wf to use it as a param
 Promotion Pipeline Onboarding
+  if docker don't run cookiecutter
+  Add pr feature back in, but only for main/master
+  A different build pipeline from current is needed for PR.. or adapt PR pipeline to be backwards compatible
+  ci-create-pipeline: rename project_type to projectLang
   Add Kargo promotion manifest creation to service onboarding .
   Manifest lives with the PROJECTS deployment config
   This means the app still needs cd-releases config for the kargo project, but not for npe deployments
@@ -119,7 +120,7 @@ Create Documentation
 
 Test senarios, dev only, stage ric1 only, stage global, ephemeral on & off, , 
 
-
+BACKLOG: Make Cookiecutter template more generic for reusability across projects
 BACKLOG: Verification phase is too slow
 BACKLOG: Separate dev and stage in the cd promote workflow so in bb we can define different staging profiles
 BACKLOG: Create Stack ApplicationSet to demo the Stage IT tests with Kustomize overlays
